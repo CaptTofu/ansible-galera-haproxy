@@ -37,7 +37,7 @@ backend mysql
   timeout connect 61s
 
 {%- set count = 1 %}
-{%- for node in groups['galera_cluster'] %}
+{% for node in groups['galera_cluster'] %}
   server galera{{ count }} {{ node }}:3306 check port 9200 inter 12000 rise 3 fall 3
   {%- if groups['galera_cluster'].index(node) > 0 %}
   backup
