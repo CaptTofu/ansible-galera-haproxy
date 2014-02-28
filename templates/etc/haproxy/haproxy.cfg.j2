@@ -37,12 +37,12 @@ backend mysql
   timeout connect 61s
 
 {%- set count = 1 %}
-{%- for node in groups['galera_cluster'] %}
-  {%- set count = count + 1 %}
+{%- for node in groups['galera_cluster'] -%}
   server galera{{ count }} {{ node }}:3306 check port 9200 inter 12000 rise 3 fall 3
   {%- if groups['galera_cluster'].index(node) > 0 %}
-  server galera{{ count }} {{ node }}:3306 check port 9200 inter 12000 rise 3 fall 3 backup
+  backup
   {% endif -%}
+  {%- set count = count + 1 %}
 {% endfor -%}
 
 # Moving the where the admin web gui is to match the hostname
