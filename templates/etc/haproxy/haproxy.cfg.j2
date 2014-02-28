@@ -36,12 +36,14 @@ backend mysql
   option tcplog
   timeout connect 61s
 
+{%- set count = 1 %}
 {%- for node in groups['galera_cluster'] %}
-  server {{ ansible_hostname }} {{ ansible_eth0.ipv4.address }}:3306 check port 9200 inter 12000 rise 3 fall 3
-  {%- if groups['galera_cluster'].index(ansible_eth0.ipv4.address) > 0 -%}
+  {% count++ 1 %}
+  server galera{{ count }} {{ node }}:3306 check port 9200 inter 12000 rise 3 fall 3
+  {%- if groups['galera_cluster'].index(node) > 0 -%}
  backup 
   {%- endif -%}
-{% endif -%}
+{% endfor -%}
 
 # Moving the where the admin web gui is to match the hostname
 # the reason is going through a reverse proxy I can match the URL
