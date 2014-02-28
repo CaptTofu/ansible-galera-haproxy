@@ -1,0 +1,51 @@
+# this config needs haproxy-1.1.28 or haproxy-1.2.1
+
+global
+  log 127.0.0.1   local0
+  log 127.0.0.1   local1 notice
+  spread-checks   5
+  maxconn 4096
+  #debug
+  #quiet
+  user haproxy
+  group haproxy
+  stats socket /var/lib/haproxy/stats mode 777
+
+
+defaults
+  log     global
+  mode    http
+  retries 3
+  timeout client 361s 
+  timeout server 361s
+  option dontlognull
+  option redispatch
+  balance  leastconn
+
+frontend mysql
+  mode tcp
+  option tcplog
+  maxconn 2000
+  bind 127.0.0.1:3306
+  default_backend mysql
+
+backend mysql
+  mode tcp
+  balance leastconn
+  option httpchk
+  option tcplog
+  timeout connect 61s
+
+{%- for node in groups['galera_cluster'] %}
+  server {{ ansible_hostname }} {{ ansible_eth0.ipv4.address }}:3306 check port 9200 inter 12000 rise 3 fall 3
+  {%- if groups['galera_cluster'].index(ansible_eth0.ipv4.address) > 0 -%}
+ backup 
+  {%- endif -%}
+{% endif -%}
+
+# Moving the where the admin web gui is to match the hostname
+# the reason is going through a reverse proxy I can match the URL
+# to the right host.
+listen admin myaddr:22002
+  mode http
+  stats uri /proxynode

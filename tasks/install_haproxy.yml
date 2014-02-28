@@ -1,0 +1,11 @@
+---
+# file: tasks/install_haproxy.yml 
+- name: Update apt cache
+  apt: update_cache=yes
+
+- name: Install HA Proxy 
+  apt: pkg={{ item }} 
+       state=present
+  with_items:
+    - haproxy 
+    - vim 
