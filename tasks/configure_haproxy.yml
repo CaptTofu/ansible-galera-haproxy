@@ -7,6 +7,4 @@
 - name: Configure haproxy for Galera Cluster 
   template: src=etc/haproxy/haproxy.cfg.j2
             dest=/etc/haproxy/haproxy.cfg
-
-- name: restart haproxy
-  action: restart haproxy
+  notify: restart haproxy
