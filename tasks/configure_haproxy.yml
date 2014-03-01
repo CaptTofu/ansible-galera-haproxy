@@ -9,4 +9,4 @@
             dest=/etc/haproxy/haproxy.cfg
 
 - name: restart haproxy
-  notify: restart haproxy
+  action: restart haproxy
