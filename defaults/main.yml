@@ -1,2 +1,7 @@
 ---
 # file: vars/main.yml
+
+galera_haproxy:
+  stats:
+    username: pxcstats
+    password: secret

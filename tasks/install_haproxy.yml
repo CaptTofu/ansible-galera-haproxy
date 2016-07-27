@@ -1,11 +1,13 @@
 ---
 # file: tasks/install_haproxy.yml 
-- name: Update apt cache
-  apt: update_cache=yes
+- name: Install HA Proxy (DEB)
+  apt: 
+    pkg: haproxy 
+    state: present
+  when: ansible_os_family == 'Debian'
 
-- name: Install HA Proxy 
-  apt: pkg={{ item }} 
-       state=present
-  with_items:
-    - haproxy 
-    - vim 
+- name: Install HA Proxy (YUM)
+  yum: 
+    name: haproxy 
+    state: present
+  when: ansible_os_family == 'RedHat'
