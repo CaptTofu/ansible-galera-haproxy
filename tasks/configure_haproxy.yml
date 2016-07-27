@@ -1,11 +1,6 @@
 ---
-
-- name: Replace broken haproxy init script
-  file: src=etc/init.d/haproxy
-        dest=/etc/init.d/haproxy
-        mode=0755
-
 - name: Configure haproxy for Galera Cluster 
-  template: src=etc/haproxy/haproxy.cfg.j2
-            dest=/etc/haproxy/haproxy.cfg
+  template:
+    src: etc/haproxy/haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
   notify: restart haproxy

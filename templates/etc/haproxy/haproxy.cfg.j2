@@ -1,51 +1,58 @@
-# this config needs haproxy-1.1.28 or haproxy-1.2.1
-
 global
   log 127.0.0.1   local0
   log 127.0.0.1   local1 notice
   spread-checks   5
   maxconn 4096
-  #debug
-  #quiet
   user haproxy
   group haproxy
-  stats socket /var/lib/haproxy/stats mode 777
-
+  daemon
 
 defaults
   log     global
   mode    http
-  retries 3
-  timeout client 361s 
-  timeout server 361s
-  option dontlognull
-  option redispatch
-  balance  leastconn
-
-frontend mysql
-  mode tcp
-  option tcplog
+  option  tcplog
+  option  dontlognull
+  option  redispatch
   maxconn 2000
-  bind 127.0.0.1:3306
-  default_backend mysql
+  timeout connect 5000
+  timeout client 50000
+  timeout server 50000
 
-backend mysql
+frontend pxc-front
+  bind *:3307
+  mode tcp
+  default_backend pxc-back
+
+frontend stats-front
+  bind *:80
+  mode http
+  default_backend stats-back
+
+frontend pxc-onenode-front
+  bind *:3306
+  mode tcp
+  default_backend pxc-onenode-back
+
+backend pxc-back
   mode tcp
   balance leastconn
   option httpchk
-  option tcplog
-  timeout connect 61s
-  {% set count = 1 %}
   {% for node in groups['galera_cluster'] %}
-  server galera{{ count }} {{ node }}:3306 check port 9200 inter 12000 rise 3 fall 3 {% print 'backup' if groups['galera_cluster'].index(node) > 0 else '' %}
-
-  {% set count = count + 1 %}
+  {% set ipv4 = hostvars[node].ansible_default_ipv4.address %}
+  server c{{ loop.index }} {{ ipv4 }}:3306 check port 9200 inter 12000 rise 3 fall 3
   {% endfor %}
 
-# M vina the where the admin web gui is to match the hostname
-
-# the reason is going through a reverse proxy I can match the URL
-# to the right host.
-listen admin {{ ansible_eth0["ipv4"]["address"] }}:22002
+backend stats-back
   mode http
-  stats uri /proxynode
+  balance roundrobin
+  stats uri /haproxy/stats
+  stats auth {{ galera_haproxy['stats']['username'] }}:{{ galera_haproxy['stats']['password'] }}
+
+backend pxc-onenode-back
+  mode tcp
+  balance leastconn
+  option httpchk
+  {% for node in groups['galera_cluster'] %}
+  {% set ipv4 = hostvars[node].ansible_default_ipv4.address %}
+  server c{{ loop.index }} {{ ipv4 }}:3306 check port 9200 inter 12000 rise 3 fall 3{% if loop.index > 1 %} backup{% endif %} 
+  {% endfor %}
